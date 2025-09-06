@@ -135,12 +135,16 @@ def test_linkcheck_local_links(app, status, warning):
 
     print(content)
     
-    # Check that valid local links are NOT reported as broken
-    assert "conf.py" not in content or "working" in content or "local" in content
+    # Check that valid local links show "ok" status (working)
+    # conf.py should be found and marked as working
+    lines = content.split('\n')
+    conf_py_lines = [line for line in lines if 'conf.py' in line]
+    if conf_py_lines:
+        assert any('ok' in line for line in conf_py_lines), f"conf.py should be 'ok' but got: {conf_py_lines}"
     
     # Check that invalid local links are reported as broken
-    assert "nonexistent" in content
-    assert "missing.txt" in content
+    assert "nonexistent" in content and "broken" in content
+    assert "missing.txt" in content and "broken" in content
 
 
 @pytest.mark.sphinx(
