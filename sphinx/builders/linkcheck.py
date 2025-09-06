@@ -238,7 +238,10 @@ class CheckExternalLinksBuilder(Builder):
                 return 'working', '', 0
             
             # If nothing found, it's broken
-            return 'broken', __('local file not found'), 0
+            if anchor:
+                return 'broken', __('local target not found: %s') % file_part, 0
+            else:
+                return 'broken', __('local target not found: %s') % file_part, 0
 
         def check() -> Tuple[str, str, int]:
             # check for various conditions without bothering the network
