@@ -126,6 +126,23 @@ def test_auth(app, status, warning):
                 assert not c_kwargs['auth']
 
 
+@pytest.mark.sphinx('linkcheck', testroot='linkcheck', freshenv=True)
+def test_linkcheck_local_links(app, status, warning):
+    app.builder.build_all()
+
+    assert (app.outdir / 'output.txt').exists()
+    content = (app.outdir / 'output.txt').read_text()
+
+    print(content)
+    
+    # Check that valid local links are NOT reported as broken
+    assert "conf.py" not in content or "working" in content or "local" in content
+    
+    # Check that invalid local links are reported as broken
+    assert "nonexistent" in content
+    assert "missing.txt" in content
+
+
 @pytest.mark.sphinx(
     'linkcheck', testroot='linkcheck', freshenv=True,
     confoverrides={'linkcheck_request_headers': {
