@@ -208,12 +208,47 @@ class CheckExternalLinksBuilder(Builder):
                 else:
                     return 'redirected', new_url, 0
 
+        def check_local_uri() -> Tuple[str, str, int]:
+            """Check if a local URI is valid."""
+            # Parse potential anchor/fragment
+            if '#' in uri:
+                file_part, anchor = uri.split('#', 1)
+            else:
+                file_part, anchor = uri, None
+            
+            # Skip empty file parts that are just anchors
+            if not file_part:
+                return 'unchecked', '', 0
+            
+            # Check if it's a document reference
+            # Try exact match first
+            if file_part in self.env.found_docs:
+                return 'working', '', 0
+            
+            # Try without extension - sphinx often references docs without extension
+            docname_no_ext = file_part
+            if '.' in file_part:
+                docname_no_ext = file_part.rsplit('.', 1)[0]
+            if docname_no_ext in self.env.found_docs:
+                return 'working', '', 0
+            
+            # Check if it's a file that exists in the source directory
+            file_path = path.join(self.env.srcdir, file_part)
+            if path.isfile(file_path):
+                return 'working', '', 0
+            
+            # If nothing found, it's broken
+            if anchor:
+                return 'broken', __('local target not found: %s') % file_part, 0
+            else:
+                return 'broken', __('local target not found: %s') % file_part, 0
+
         def check() -> Tuple[str, str, int]:
             # check for various conditions without bothering the network
             if len(uri) == 0 or uri.startswith(('#', 'mailto:', 'ftp:')):
                 return 'unchecked', '', 0
             elif not uri.startswith(('http:', 'https:')):
-                return 'local', '', 0
+                return check_local_uri()
             elif uri in self.good:
                 return 'working', 'old', 0
             elif uri in self.broken:
